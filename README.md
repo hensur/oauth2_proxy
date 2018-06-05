@@ -168,7 +168,11 @@ Authentication can be restricted to a single team with the `-slack-team` command
 
 You can get it by creating a token for your workspace: https://api.slack.com/custom-integrations/legacy-tokens
 
-With this token "Test" the auth.test method here: https://api.slack.com/methods/auth.test/test The response contains the Team ID.
+With this token, "test" the auth.test method: https://api.slack.com/methods/auth.test/test
+The response contains the Team ID.
+
+To restrict it even further a private group ID can be specified with `-slack-group`, `slack_group` is the corresponding settings entry.
+Test the "groups.list" method to get your group's ID: https://api.slack.com/methods/groups.list/test
 
 ## Email Authentication
 
@@ -208,6 +212,8 @@ Usage of oauth2_proxy:
   -footer string: custom footer string. Use "-" to disable default footer.
   -github-org string: restrict logins to members of this organisation
   -github-team string: restrict logins to members of any of these teams (slug), separated by a comma
+  -slack-team string: restrict logins to members of this team
+  -slack-group string: restrict logins to members of this private group
   -google-admin-email string: the google admin to impersonate for api calls
   -google-group value: restrict logins to members of this google group (may be given multiple times).
   -google-service-account-json string: the path to the service account json credentials
