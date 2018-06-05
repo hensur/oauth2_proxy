@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 )
 
 type SlackProvider struct {
@@ -84,7 +85,6 @@ func (p *SlackProvider) SetTeamID(team string) {
 func (p *SlackProvider) SetGroupID(group string) {
 	if group != "" {
 		p.GroupID = group
-		p.Scope += " groups:read"
 	}
 }
 
@@ -192,4 +192,13 @@ func (p *SlackProvider) GetEmailAddress(s *SessionState) (string, error) {
 	}
 
 	return "", nil
+}
+
+func (p *SlackProvider) SecondAttempt() bool {
+	fmt.Println(p.GroupID)
+	if strings.Contains(p.Scope, "groups:read") || p.GroupID == "" {
+		return false
+	}
+	p.Scope = "groups:read"
+	return true
 }
