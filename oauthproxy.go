@@ -536,6 +536,13 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Start a second oauth flow with a different scope set by the provider
+	// e.g. slack will add each new scope to the existing token
+	if p.provider.SecondAttempt() {
+		p.OAuthStart(rw, req)
+		return
+	}
+
 	session, err := p.redeemCode(req.Host, req.Form.Get("code"))
 	if err != nil {
 		log.Printf("%s error redeeming code %s", remoteAddr, err)
