@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -173,6 +174,7 @@ func (p *SlackProvider) GetEmailAddress(s *SessionState) (string, error) {
 	// if we require a TeamID, check that first
 	if p.TeamID != "" {
 		if ok := p.hasTeamID(userIdentity); !ok {
+			log.Printf("teamid: %s does not match with %s", userIdentity.Team.ID, p.TeamID)
 			return "", fmt.Errorf("team id doesn't match")
 		}
 	}
@@ -183,6 +185,7 @@ func (p *SlackProvider) GetEmailAddress(s *SessionState) (string, error) {
 			return "", nil
 		}
 		if ok := p.hasGroupID(groupList); !ok {
+			log.Printf("groupid: %v does not match with %s", groupList.Groups, p.GroupID)
 			return "", fmt.Errorf("group id doesn't match")
 		}
 	}
