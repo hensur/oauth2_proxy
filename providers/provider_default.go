@@ -78,7 +78,7 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 }
 
 // GetLoginURL with typical oauth parameters
-func (p *ProviderData) GetLoginURL(redirectURI, state string) string {
+func (p *ProviderData) GetLoginURL(redirectURI, state string, second bool) string {
 	var a url.URL
 	a = *p.LoginURL
 	params, _ := url.ParseQuery(a.RawQuery)
@@ -126,6 +126,6 @@ func (p *ProviderData) RefreshSessionIfNeeded(s *SessionState) (bool, error) {
 	return false, nil
 }
 
-func (p *ProviderData) SecondAttempt() bool {
+func (p *ProviderData) SecondAttempt(s *SessionState) bool {
 	return false
 }

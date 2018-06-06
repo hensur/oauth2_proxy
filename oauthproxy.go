@@ -505,7 +505,7 @@ func (p *OAuthProxy) SignOut(rw http.ResponseWriter, req *http.Request) {
 	http.Redirect(rw, req, "/", 302)
 }
 
-func (p *OAuthProxy) OAuthStart(rw http.ResponseWriter, req *http.Request) {
+func (p *OAuthProxy) writeStart(rw http.ResponseWriter, req *http.Request, second bool) {
 	nonce, err := cookie.Nonce()
 	if err != nil {
 		p.ErrorPage(rw, 500, "Internal Error", err.Error())
@@ -518,7 +518,11 @@ func (p *OAuthProxy) OAuthStart(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	redirectURI := p.GetRedirectURI(req.Host)
-	http.Redirect(rw, req, p.provider.GetLoginURL(redirectURI, fmt.Sprintf("%v:%v", nonce, redirect)), 302)
+	http.Redirect(rw, req, p.provider.GetLoginURL(redirectURI, fmt.Sprintf("%v:%v", nonce, redirect), second), 302)
+}
+
+func (p *OAuthProxy) OAuthStart(rw http.ResponseWriter, req *http.Request) {
+	p.writeStart(rw, req, false)
 }
 
 func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
@@ -536,17 +540,17 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Start a second oauth flow with a different scope set by the provider
-	// e.g. slack will add each new scope to the existing token
-	if p.provider.SecondAttempt() {
-		p.OAuthStart(rw, req)
-		return
-	}
-
 	session, err := p.redeemCode(req.Host, req.Form.Get("code"))
 	if err != nil {
 		log.Printf("%s error redeeming code %s", remoteAddr, err)
 		p.ErrorPage(rw, 500, "Internal Error", "Internal Error")
+		return
+	}
+
+	// Start a second oauth flow with a different scope set by the provider
+	// e.g. slack will add each new scope to the existing token
+	if ok := p.provider.SecondAttempt(session); ok {
+		p.writeStart(rw, req, true)
 		return
 	}
 
