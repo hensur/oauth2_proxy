@@ -36,6 +36,7 @@ type Options struct {
 	GitHubTeam               string   `flag:"github-team" cfg:"github_team"`
 	SlackTeam                string   `flag:"slack-team" cfg:"slack_team"`
 	SlackGroup               string   `flag:"slack-group" cfg:"slack_group"`
+	SpaceID                  string   `flag:"space-id" cfg:"space_id"`
 	GoogleGroups             []string `flag:"google-group" cfg:"google_group"`
 	GoogleAdminEmail         string   `flag:"google-admin-email" cfg:"google_admin_email"`
 	GoogleServiceAccountJSON string   `flag:"google-service-account-json" cfg:"google_service_account_json"`
@@ -283,6 +284,8 @@ func parseProviderInfo(o *Options, msgs []string) []string {
 	case *providers.SlackProvider:
 		p.SetTeamID(o.SlackTeam)
 		p.SetGroupID(o.SlackGroup)
+	case *providers.SpacesProvider:
+		p.SetSpaceID(o.SpaceID)
 	}
 	return msgs
 }

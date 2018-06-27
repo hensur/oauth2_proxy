@@ -34,6 +34,8 @@ func New(provider string, p *ProviderData) Provider {
 		return NewOIDCProvider(p)
 	case "slack":
 		return NewSlackProvider(p)
+	case "spaces":
+		return NewSpacesProvider(p)
 	default:
 		return NewGoogleProvider(p)
 	}
