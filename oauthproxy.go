@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -52,6 +53,7 @@ type OAuthProxy struct {
 	OAuthStartPath    string
 	OAuthCallbackPath string
 	AuthOnlyPath      string
+	StaticFilePath    string
 
 	redirectURL         *url.URL // the url to receive requests at
 	provider            providers.Provider
@@ -72,6 +74,7 @@ type OAuthProxy struct {
 	compiledRegex       []*regexp.Regexp
 	templates           *template.Template
 	Footer              string
+	StaticFileDir       string
 }
 
 type UpstreamProxy struct {
@@ -189,6 +192,7 @@ func NewOAuthProxy(opts *Options, validator func(string) bool) *OAuthProxy {
 		OAuthStartPath:    fmt.Sprintf("%s/start", opts.ProxyPrefix),
 		OAuthCallbackPath: fmt.Sprintf("%s/callback", opts.ProxyPrefix),
 		AuthOnlyPath:      fmt.Sprintf("%s/auth", opts.ProxyPrefix),
+		StaticFilePath:    fmt.Sprintf("%s/static", opts.ProxyPrefix),
 
 		ProxyPrefix:        opts.ProxyPrefix,
 		provider:           opts.provider,
@@ -206,6 +210,7 @@ func NewOAuthProxy(opts *Options, validator func(string) bool) *OAuthProxy {
 		CookieCipher:       cipher,
 		templates:          loadTemplates(opts.CustomTemplatesDir),
 		Footer:             opts.Footer,
+		StaticFileDir:      filepath.Join(opts.CustomTemplatesDir, "static"),
 	}
 }
 
@@ -474,6 +479,8 @@ func (p *OAuthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		p.OAuthCallback(rw, req)
 	case path == p.AuthOnlyPath:
 		p.AuthenticateOnly(rw, req)
+	case strings.HasPrefix(path, p.StaticFilePath):
+		p.StaticFiles(rw, req)
 	default:
 		p.Proxy(rw, req)
 	}
@@ -742,4 +749,14 @@ func (p *OAuthProxy) CheckBasicAuth(req *http.Request) (*providers.SessionState,
 		return &providers.SessionState{User: pair[0]}, nil
 	}
 	return nil, fmt.Errorf("%s not in HtpasswdFile", pair[0])
+}
+
+func (p *OAuthProxy) StaticFiles(rw http.ResponseWriter, req *http.Request) {
+	imgPath := strings.TrimPrefix(req.URL.String(), p.StaticFilePath)
+
+	if p.StaticFileDir != "" {
+		http.ServeFile(rw, req, filepath.Join(p.StaticFileDir, imgPath))
+	} else {
+		p.ErrorPage(rw, 404, "File Not Found", imgPath)
+	}
 }
