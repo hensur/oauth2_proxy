@@ -32,21 +32,21 @@ func NewSpacesProvider(p *ProviderData) *SpacesProvider {
 	if p.LoginURL == nil || p.LoginURL.String() == "" {
 		p.LoginURL = &url.URL{
 			Scheme: "https",
-			Host:   "signup.spaces.de",
+			Host:   "signup.dev.spaces.de",
 			Path:   "/o/oauth2/auth",
 		}
 	}
 	if p.RedeemURL == nil || p.RedeemURL.String() == "" {
 		p.RedeemURL = &url.URL{
 			Scheme: "https",
-			Host:   "signup.spaces.de",
+			Host:   "signup.dev.spaces.de",
 			Path:   "/o/oauth2/token",
 		}
 	}
 	if p.ValidateURL == nil || p.ValidateURL.String() == "" {
 		p.ValidateURL = &url.URL{
 			Scheme: "https",
-			Host:   "api.spaces.de",
+			Host:   "api.dev.spaces.de",
 			Path:   "/v1",
 		}
 	}

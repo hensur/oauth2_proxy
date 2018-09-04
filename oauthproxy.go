@@ -525,6 +525,7 @@ func (p *OAuthProxy) writeStart(rw http.ResponseWriter, req *http.Request, secon
 		return
 	}
 	redirectURI := p.GetRedirectURI(req.Host)
+	fmt.Println(req)
 	http.Redirect(rw, req, p.provider.GetLoginURL(redirectURI, fmt.Sprintf("%v:%v", nonce, redirect), second), 302)
 }
 
