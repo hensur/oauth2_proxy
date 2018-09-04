@@ -1,6 +1,6 @@
 FROM golang:1.10.2
 RUN mkdir -p /go/src/github.com/bitly
-RUN cd /go/src/github.com/bitly && git clone https://github.com/hensur/oauth2_proxy.git \
+RUN cd /go/src/github.com/bitly && git clone https://github.com/hensur/oauth2_proxy.git -b testing \
     && curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 WORKDIR /go/src/github.com/bitly/oauth2_proxy
 RUN dep ensure
