@@ -40,7 +40,7 @@ type OAuthProxy struct {
 	CookieName     string
 	CSRFCookieName string
 	CookieDomain   string
-	CookieSecure   bool
+	CookieSecure   string
 	CookieHttpOnly bool
 	CookieExpire   time.Duration
 	CookieRefresh  time.Duration
@@ -163,7 +163,7 @@ func NewOAuthProxy(opts *Options, validator func(string) bool) *OAuthProxy {
 		refresh = fmt.Sprintf("after %s", opts.CookieRefresh)
 	}
 
-	log.Printf("Cookie settings: name:%s secure(https):%v httponly:%v expiry:%s domain:%s refresh:%s", opts.CookieName, opts.CookieSecure, opts.CookieHttpOnly, opts.CookieExpire, opts.CookieDomain, refresh)
+	log.Printf("Cookie settings: name:%s secure(https):%s httponly:%v expiry:%s domain:%s refresh:%s", opts.CookieName, opts.CookieSecure, opts.CookieHttpOnly, opts.CookieExpire, opts.CookieDomain, refresh)
 
 	var cipher *cookie.Cipher
 	if opts.PassAccessToken || (opts.CookieRefresh != time.Duration(0)) {
@@ -214,7 +214,22 @@ func NewOAuthProxy(opts *Options, validator func(string) bool) *OAuthProxy {
 	}
 }
 
-func (p *OAuthProxy) GetRedirectURI(host string) string {
+func (p *OAuthProxy) isCookieSecure(req *http.Request) bool {
+	proto := p.CookieSecure
+	if proto == "auto" {
+		header := req.Header.Get("X-Forwarded-Proto")
+		if header != "" {
+			proto = header
+		}
+	}
+
+	if proto == "http" {
+		return false
+	}
+	return true
+}
+
+func (p *OAuthProxy) GetRedirectURI(req *http.Request) string {
 	// default to the request Host if not set
 	if p.redirectURL.Host != "" {
 		return p.redirectURL.String()
@@ -222,13 +237,13 @@ func (p *OAuthProxy) GetRedirectURI(host string) string {
 	var u url.URL
 	u = *p.redirectURL
 	if u.Scheme == "" {
-		if p.CookieSecure {
+		if p.isCookieSecure(req) {
 			u.Scheme = "https"
 		} else {
 			u.Scheme = "http"
 		}
 	}
-	u.Host = host
+	u.Host = req.Host
 	return u.String()
 }
 
@@ -236,11 +251,12 @@ func (p *OAuthProxy) displayCustomLoginForm() bool {
 	return p.HtpasswdFile != nil && p.DisplayHtpasswdForm
 }
 
-func (p *OAuthProxy) redeemCode(host, code string) (s *providers.SessionState, err error) {
+func (p *OAuthProxy) redeemCode(req *http.Request) (s *providers.SessionState, err error) {
+	code := req.Form.Get("code")
 	if code == "" {
 		return nil, errors.New("missing code")
 	}
-	redirectURI := p.GetRedirectURI(host)
+	redirectURI := p.GetRedirectURI(req)
 	s, err = p.provider.Redeem(redirectURI, code)
 	if err != nil {
 		return
@@ -291,7 +307,7 @@ func (p *OAuthProxy) makeCookie(req *http.Request, name string, value string, ex
 		Path:     "/",
 		Domain:   p.CookieDomain,
 		HttpOnly: p.CookieHttpOnly,
-		Secure:   p.CookieSecure,
+		Secure:   p.isCookieSecure(req),
 		Expires:  now.Add(expiration),
 	}
 }
@@ -524,7 +540,7 @@ func (p *OAuthProxy) writeStart(rw http.ResponseWriter, req *http.Request, secon
 		p.ErrorPage(rw, 500, "Internal Error", err.Error())
 		return
 	}
-	redirectURI := p.GetRedirectURI(req.Host)
+	redirectURI := p.GetRedirectURI(req)
 	http.Redirect(rw, req, p.provider.GetLoginURL(redirectURI, fmt.Sprintf("%v:%v", nonce, redirect), second), 302)
 }
 
@@ -547,7 +563,7 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	session, err := p.redeemCode(req.Host, req.Form.Get("code"))
+	session, err := p.redeemCode(req)
 	if err != nil {
 		log.Printf("%s error redeeming code %s", remoteAddr, err)
 		p.ErrorPage(rw, 500, "Internal Error", "Internal Error")

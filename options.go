@@ -50,7 +50,7 @@ type Options struct {
 	CookieDomain   string        `flag:"cookie-domain" cfg:"cookie_domain" env:"OAUTH2_PROXY_COOKIE_DOMAIN"`
 	CookieExpire   time.Duration `flag:"cookie-expire" cfg:"cookie_expire" env:"OAUTH2_PROXY_COOKIE_EXPIRE"`
 	CookieRefresh  time.Duration `flag:"cookie-refresh" cfg:"cookie_refresh" env:"OAUTH2_PROXY_COOKIE_REFRESH"`
-	CookieSecure   bool          `flag:"cookie-secure" cfg:"cookie_secure"`
+	CookieSecure   string        `flag:"cookie-secure" cfg:"cookie_secure"`
 	CookieHttpOnly bool          `flag:"cookie-httponly" cfg:"cookie_httponly"`
 
 	Upstreams             []string `flag:"upstream" cfg:"upstreams"`
@@ -103,7 +103,7 @@ func NewOptions() *Options {
 		HttpsAddress:         ":443",
 		DisplayHtpasswdForm:  true,
 		CookieName:           "_oauth2_proxy",
-		CookieSecure:         true,
+		CookieSecure:         "true",
 		CookieHttpOnly:       true,
 		CookieExpire:         time.Duration(168) * time.Hour,
 		CookieRefresh:        time.Duration(0),
